@@ -1,0 +1,14 @@
+name: bandit_env
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.9.6
+  - pip
+  - pip:
+    - DeepMIMO
+    - jupyter
+    - numpy
+    - matplotlib
+    - black
+    - flake8
