@@ -1,6 +1,9 @@
 """
 This module provides calculations related to the opreation of the entire
 network system.
+
+Given a network setting, channel and location data, this module calculates
+the spectral efficiency and its average values in different schemes.
 """
 from configs import config
 from modules import node
@@ -34,15 +37,6 @@ class System:
         self.UE = UE
         self.H = H
         self.loc = loc
-        # the set of arms
-        self.arms = []
-        for i in range(BS.M):
-            for j in range(UE.M):
-                self.arms.append(
-                    bandits.ARM(
-                        i=i, j=j
-                    )
-                )
 
     def calc_SE_at_time_t(self, arm: bandits.ARM, t: int) -> float:
         """
@@ -82,18 +76,6 @@ class System:
 
         return np.log2(1 + signal_mag.item() / noise_mag.item())
 
-    def reset_arms(self) -> None:
-        """
-        Reset all the arms.
-        E.g. n_{i, j} = 0 and mu_{i, j} = 0 for all arms.
-        """
-        for arm in self.arms:
-            arm.mu = 0
-            arm.n_play = 0
-            arm.A = None
-            arm.b = None
-            arm.phi = None
-
     def calc_average_SE(self, SE: np.array, w: int = 100) -> np.array:
         """
         Calculate the average spectral efficiency using sliding window.
@@ -118,13 +100,20 @@ class System:
         Returns:
             np.array: Optimal SE obtained at each time slot.
         """
-        # reset all the arms
-        self.reset_arms()
         optimal_SE = np.zeros(len(self.H))
+        # Initialize the list of arms
+        list_of_arms = []
+        for i in range(self.BS.M):
+            for j in range(self.UE.M):
+                list_of_arms.append(
+                    bandits.ArmUCB(
+                        i=i, j=j
+                    )
+                )
 
         for t in range(len(self.H)):
             # scanning all the arms
-            for arm in self.arms:
+            for arm in list_of_arms:
                 # calculate the SE if this arm is pulled
                 obtained_SE = self.calc_SE_at_time_t(arm=arm, t=t)
                 # update the optimal SE if the obtained SE is better
@@ -153,10 +142,17 @@ class System:
         Returns:
             np.array: The SE achieved by using UCB algorithm.
         """
-        # Reset all the arms
-        self.reset_arms()
+        # Initialize the list of arms
+        list_of_arms = []
+        for i in range(self.BS.M):
+            for j in range(self.UE.M):
+                list_of_arms.append(
+                    bandits.ArmUCB(
+                        i=i, j=j
+                    )
+                )
         SE = np.zeros(len(self.H))
-        ucb = bandits.UCB(arms=self.arms, c=c)
+        ucb = bandits.UCB(arms=list_of_arms, c=c)
 
         for t in range(len(self.H)):
             # selected arm
@@ -181,18 +177,25 @@ class System:
         Returns:
             np.array: The SE achieved by using UCB algorithm.
         """
-        # Reset all the arms
-        self.reset_arms()
+        # Initialize the list of arms
+        list_of_arms = []
+        for i in range(self.BS.M):
+            for j in range(self.UE.M):
+                list_of_arms.append(
+                    bandits.ArmLinUCB(
+                        i=i, j=j
+                    )
+                )
         SE = np.zeros(len(self.H))
-        linUCB = bandits.linUCB(arms=self.arms, delta=delta, d=d)
+        LinUCB = bandits.LinUCB(arms=list_of_arms, delta=delta, d=d)
 
         for t in range(len(self.H)):
             # selected arm
-            k = linUCB.select_arm(t=t, x=self.loc[t].reshape(-1, 1))
+            k = LinUCB.select_arm(t=t, x=self.loc[t].reshape(-1, 1))
             # calculate the reward received in the time slot t
-            SE[t] = self.calc_SE_at_time_t(arm=linUCB.arms[k], t=t)
+            SE[t] = self.calc_SE_at_time_t(arm=LinUCB.arms[k], t=t)
             # pull the arm and update attributes of arms
-            linUCB.pull_arm(k=k, r=SE[t], x=self.loc[t].reshape(-1, 1))
+            LinUCB.pull_arm(k=k, r=SE[t], x=self.loc[t].reshape(-1, 1))
             print('t = {}: pull arm {}, receive reward {}'.format(t, k, SE[t]))
 
         return SE
