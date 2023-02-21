@@ -6,31 +6,25 @@ from dataclasses import dataclass
 import numpy as np
 from typing import List
 
-# from IPython.display import clear_output
-
 
 @dataclass
 class ARM:
-    index: int = None
     # i-th beamforming of BS
     i: int = None
     # j-th beamforming of UE
     j: int = None
-    # mean reward
-    mu: float = 0
     # number of times this arm is played
     n_play: int = 0
-    # matrix A, this is used in LinUCB
-    A: np.array = None
-    # vector b, this is used in LinUCB
-    b: np.array = None
-    # the estimated vector phi, or coefficient vector
-    # this is used in LinUCB
-    phi: np.array = None
+
+
+@dataclass
+class ArmUCB(ARM):
+    # mean reward
+    mu: float = 0
 
 
 class UCB:
-    def __init__(self, arms: List[ARM], c: float) -> None:
+    def __init__(self, arms: List[ArmUCB], c: float) -> None:
         # list of all arms
         self.arms = arms
         # number of arms
@@ -74,13 +68,24 @@ class UCB:
         self.arms[k].n_play += 1
 
 
-class linUCB:
-    # Implement the linUCB algorithm
-    # See paper: Li, Lihong, et al. "A contextual-bandit approach to
+@dataclass
+class ArmLinUCB(ARM):
+    # matrix A, this is used in LinUCB
+    A: np.array = None
+    # vector b, this is used in LinUCB
+    b: np.array = None
+    # the estimated vector phi, or coefficient vector
+    # this is used in LinUCB
+    phi: np.array = None
+
+
+class LinUCB:
+    # Implement the LinUCB algorithm
+    # References: Li, Lihong, et al. "A contextual-bandit approach to
     # personalized news article recommendation." Proceedings of the 19th
     # international conference on World wide web. 2010.
     def __init__(
-        self, arms: List[ARM], delta: float = 0.05, d: int = 2
+        self, arms: List[ArmLinUCB], delta: float = 0.05, d: int = 2
     ) -> None:
         # list of all arms
         self.arms = arms
@@ -111,7 +116,7 @@ class linUCB:
         """
         alpha = 1 + np.sqrt(0.5 * np.log(2 / self.delta))
 
-        def calc_p(arm: ARM) -> float:
+        def calc_p(arm: ArmLinUCB) -> float:
             """
             Calculate the p_{t,a} for the ARM a.
             Note that all the values of A, D, c and phi were already updated
