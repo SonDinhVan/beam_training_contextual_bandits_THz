@@ -94,18 +94,17 @@ class System:
     def calc_optimal_SE(self) -> np.array:
         """
         Calculate the optimal spectral efficiency by scanning all pairs of
-        beamforming at BS and UE. Perform this function will also change the
-        values of the arms.
+        beamforming at BS and UE.
 
         Returns:
             np.array: Optimal SE obtained at each time slot.
         """
         optimal_SE = np.zeros(len(self.H))
         # Initialize the list of arms
-        list_of_arms = []
+        all_arms = []
         for i in range(self.BS.M):
             for j in range(self.UE.M):
-                list_of_arms.append(
+                all_arms.append(
                     bandits.ArmUCB(
                         i=i, j=j
                     )
@@ -113,7 +112,7 @@ class System:
 
         for t in range(len(self.H)):
             # scanning all the arms
-            for arm in list_of_arms:
+            for arm in all_arms:
                 # calculate the SE if this arm is pulled
                 obtained_SE = self.calc_SE_at_time_t(arm=arm, t=t)
                 # update the optimal SE if the obtained SE is better
@@ -133,8 +132,7 @@ class System:
 
     def calc_SE_using_UCB(self, c: float = 5.0) -> np.array:
         """
-        Calculate the performance using the UCB algorithm. Applying this
-        function will also change the value of arms.
+        Calculate the performance using the UCB algorithm.
 
         Args:
             c (float, optional): The UCB parameter. Defaults to 5.0.
@@ -143,16 +141,16 @@ class System:
             np.array: The SE achieved by using UCB algorithm.
         """
         # Initialize the list of arms
-        list_of_arms = []
+        all_arms = []
         for i in range(self.BS.M):
             for j in range(self.UE.M):
-                list_of_arms.append(
+                all_arms.append(
                     bandits.ArmUCB(
                         i=i, j=j
                     )
                 )
         SE = np.zeros(len(self.H))
-        ucb = bandits.UCB(arms=list_of_arms, c=c)
+        ucb = bandits.UCB(arms=all_arms, c=c)
 
         for t in range(len(self.H)):
             # selected arm
@@ -169,8 +167,7 @@ class System:
         self, delta: float = 0.05, d: int = 2
     ) -> np.array:
         """
-        Calculate the performance using the LinUCB algorithm. Applying this
-        function will also change the value of arms.
+        Calculate the performance using the LinUCB algorithm.
 
         Args:
 
@@ -178,16 +175,16 @@ class System:
             np.array: The SE achieved by using UCB algorithm.
         """
         # Initialize the list of arms
-        list_of_arms = []
+        all_arms = []
         for i in range(self.BS.M):
             for j in range(self.UE.M):
-                list_of_arms.append(
+                all_arms.append(
                     bandits.ArmLinUCB(
                         i=i, j=j
                     )
                 )
         SE = np.zeros(len(self.H))
-        LinUCB = bandits.LinUCB(arms=list_of_arms, delta=delta, d=d)
+        LinUCB = bandits.LinUCB(arms=all_arms, delta=delta, d=d)
 
         for t in range(len(self.H)):
             # selected arm
