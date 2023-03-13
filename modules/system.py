@@ -188,7 +188,7 @@ class System:
 
         for t in range(len(self.H)):
             # selected arm
-            k = LinUCB.select_arm(t=t, x=self.loc[t].reshape(-1, 1))
+            k = LinUCB.select_arm(x=self.loc[t].reshape(-1, 1))
             # calculate the reward received in the time slot t
             SE[t] = self.calc_SE_at_time_t(arm=LinUCB.arms[k], t=t)
             # pull the arm and update attributes of arms
@@ -222,11 +222,13 @@ class System:
 
         for t in range(len(self.H)):
             # selected arm
-            k = Exp3.select_arm(t=t)
+            k = Exp3.select_arm()
             # calculate the reward received in the time slot t
             SE[t] = self.calc_SE_at_time_t(arm=Exp3.arms[k], t=t)
+            # scale the SE to the range [0, 1]
+            scaled_SE = SE[t] / 20
             # pull the arm and update attributes of arms
-            Exp3.pull_arm(k=k, r=SE[t])
+            Exp3.pull_arm(k=k, r=scaled_SE)
             print('t = {}: pull arm {}, receive reward {}'.format(t, k, SE[t]))
 
         return SE

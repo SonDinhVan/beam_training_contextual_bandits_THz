@@ -103,12 +103,11 @@ class LinUCB:
         # the dimension of the contextual vector is d x 1
         self.d = d
 
-    def select_arm(self, t: int, x: np.array) -> int:
+    def select_arm(self, x: np.array) -> int:
         """
         Select an arm to pull.
 
         Args:
-            t (int): the time index.
             x (np.array): the contextual vector in the corresponding timeslot.
 
         Returns:
@@ -154,25 +153,20 @@ class ArmExp3(ARM):
     w: float = 1
     # probability of selecting this arm
     p: float = None
-    # estimated reward
-    x_hat: float = None
 
 
 class Exp3:
     # Implement the Exp3 algorithm
     # Paper: The non-stochastic multi-armed bandit problem.
-    def __init__(self, arms: List[ArmExp3], gamma: float = 0.5) -> None:
+    def __init__(self, arms: List[ArmExp3], gamma: float = 0.9) -> None:
         # the list of arms
         self.arms = arms
         # learning rate in the range [0, 1]
         self.gamma = gamma
 
-    def select_arm(self, t: int) -> int:
+    def select_arm(self) -> int:
         """
         Select an arm to pull.
-
-        Args:
-            t (int): the time index.
 
         Returns:
             int: the index of the pulled arm.
@@ -183,6 +177,8 @@ class Exp3:
             arm.p = (1 - self.gamma) * arm.w / sum_weights + self.gamma / len(
                 self.arms
             )
+        # print('Probability:', [arm.p for arm in self.arms])
+        # print('Weights:', [arm.w for arm in self.arms])
         return np.random.choice(
             range(len(self.arms)), p=[arm.p for arm in self.arms]
         )
@@ -195,11 +191,8 @@ class Exp3:
             k (int): The index of the pulled arm.
             r (float): Reward received when k-th arm is pulled.
         """
-        self.arms[k].n_play = 1
-        for j in range(len(self.arms)):
-            # the estimated reward for each arm
-            self.arms[j].x_hat = r / self.arms[k].p if j == k else 0
-            # update the weight for each arm
-            self.arms[j].w *= np.exp(
-                self.gamma * self.arms[j].x_hat / len(self.arms)
-            )
+        self.arms[k].n_play += 1
+        # only update the weight of the selected arm
+        # estimated reward
+        x_hat = r / self.arms[k].p
+        self.arms[k].w *= np.exp(self.gamma * x_hat / len(self.arms))
