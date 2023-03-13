@@ -188,11 +188,47 @@ class System:
 
         for t in range(len(self.H)):
             # selected arm
-            k = LinUCB.select_arm(t=t, x=self.loc[t].reshape(-1, 1))
+            k = LinUCB.select_arm(x=self.loc[t].reshape(-1, 1))
             # calculate the reward received in the time slot t
             SE[t] = self.calc_SE_at_time_t(arm=LinUCB.arms[k], t=t)
             # pull the arm and update attributes of arms
             LinUCB.pull_arm(k=k, r=SE[t], x=self.loc[t].reshape(-1, 1))
+            print('t = {}: pull arm {}, receive reward {}'.format(t, k, SE[t]))
+
+        return SE
+
+    def calc_SE_using_Exp3(
+        self, gamma: float = 0.5
+    ) -> np.array:
+        """
+        Calculate the performance using the Exp3 algorithm.
+
+        Args:
+
+        Returns:
+            np.array: The SE achieved by using Exp3 algorithm.
+        """
+        # Initialize the list of arms
+        all_arms = []
+        for i in range(self.BS.M):
+            for j in range(self.UE.M):
+                all_arms.append(
+                    bandits.ArmExp3(
+                        i=i, j=j
+                    )
+                )
+        SE = np.zeros(len(self.H))
+        Exp3 = bandits.Exp3(arms=all_arms, gamma=gamma)
+
+        for t in range(len(self.H)):
+            # selected arm
+            k = Exp3.select_arm()
+            # calculate the reward received in the time slot t
+            SE[t] = self.calc_SE_at_time_t(arm=Exp3.arms[k], t=t)
+            # scale the SE to the range [0, 1]
+            scaled_SE = SE[t] / 20
+            # pull the arm and update attributes of arms
+            Exp3.pull_arm(k=k, r=scaled_SE)
             print('t = {}: pull arm {}, receive reward {}'.format(t, k, SE[t]))
 
         return SE
