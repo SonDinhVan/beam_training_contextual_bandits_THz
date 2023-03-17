@@ -130,12 +130,13 @@ class System:
 
         return optimal_SE
 
-    def calc_SE_using_UCB(self, c: float = 5.0) -> np.array:
+    def calc_SE_using_UCB(self, delta: float = 0.05) -> np.array:
         """
         Calculate the performance using the UCB algorithm.
 
         Args:
-            c (float, optional): The UCB parameter. Defaults to 5.0.
+            delta (float, optional): The uncertainty probability.
+                Defaults to 0.05.
 
         Returns:
             np.array: The SE achieved by using UCB algorithm.
@@ -150,7 +151,7 @@ class System:
                     )
                 )
         SE = np.zeros(len(self.H))
-        ucb = bandits.UCB(arms=all_arms, c=c)
+        ucb = bandits.UCB(arms=all_arms, delta=delta)
 
         for t in range(len(self.H)):
             # selected arm
