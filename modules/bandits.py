@@ -24,13 +24,13 @@ class ArmUCB(ARM):
 
 
 class UCB:
-    def __init__(self, arms: List[ArmUCB], c: float) -> None:
+    def __init__(self, arms: List[ArmUCB], delta: float) -> None:
         # list of all arms
         self.arms = arms
         # number of arms
         self.n_arms = len(arms)
-        # upper confidence bound parameter
-        self.c = c
+        # uncertainty probability
+        self.delta = delta
 
     def select_arm(self, t: int) -> int:
         """
@@ -47,7 +47,7 @@ class UCB:
         else:
             # upper confidence bound for all arms
             ucb = [
-                arm.mu + self.c * np.sqrt(np.log(t) / arm.n_play)
+                arm.mu + np.sqrt(2 * np.log10(1/self.delta) / arm.n_play)
                 for arm in self.arms
             ]
             return np.argmax(ucb)
